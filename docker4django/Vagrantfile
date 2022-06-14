@@ -1,0 +1,37 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# This is a vagrant box which will be provisioned by an ansible maching
+# Should have docker and everything else for django
+
+
+# Style for Vagrantfiles: use "" https://stackoverflow.com/questions/44167694/is-there-a-style-guide-for-quoting-variables-in-vagrantfiles
+
+Vagrant.configure("2") do |config|
+
+  # Every Vagrant development environment requires a box. You can search for
+  # boxes at https://vagrantcloud.com/search.
+  config.vm.box = "ubuntu/focal64"
+
+
+  config.vm.define "dockermachine" do |machine|
+    machine.vm.network "private_network", ip: "192.168.33.19"
+    machine.vm.hostname = "dockermachine"
+    machine.vm.provider "virtualbox" do |v|
+      v.name = "dockermachine_vm"
+    end
+    machine.vm.synced_folder "./project", "/home/vagrant/project", create: true, 
+                                            mount_options: ["dmode=700","fmode=600"]
+    machine.vm.synced_folder "./ansible", "/home/vagrant/ansible", create: true, 
+                                            mount_options: ["dmode=700","fmode=600"]
+
+    machine.vm.provision "shell", inline: <<-SHELL
+      sudo apt-get update
+      sudo apt-get install -y software-properties-common
+      sudo add-apt-repository ppa:deadsnakes/ppa
+      sudo apt-get update
+      sudo apt-get install -y python3.10 python3-pip
+    SHELL
+  end
+
+end

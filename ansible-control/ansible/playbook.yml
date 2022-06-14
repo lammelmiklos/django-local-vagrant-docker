@@ -1,0 +1,6 @@
+- hosts: docker2
+  tasks:
+  - name: Creating an empty file
+    file:
+      path: "/home/vagrant/project/test_node.txt"
+      state: touch

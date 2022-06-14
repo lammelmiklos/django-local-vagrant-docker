@@ -1,0 +1,51 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# This is just a shell provisioning - setting up a VM for docker usage
+# run "vagrant box update" - to update the basebox - less apt-get upgrade is needed
+
+# Style for Vagrantfiles: use "" https://stackoverflow.com/questions/44167694/is-there-a-style-guide-for-quoting-variables-in-vagrantfiles
+
+Vagrant.configure("2") do |config|
+
+    # Every Vagrant development environment requires a box. You can search for
+    # boxes at https://vagrantcloud.com/search.
+    config.vm.box = "ubuntu/focal64"
+  
+  
+    # https://www.vagrantup.com/docs/triggers
+    # config.trigger.before [:up, :provision] do |trigger|
+    #   trigger.info = "Running ./bootstrap.bat locally..."
+    #   # trigger.run = {path: "./bootstrap.bat"}
+    #   trigger.run = {path: "C:/Program Files/Git/git-bash.exe"}
+    # end
+    config.vm.define "dockermachine2" do |machine|
+      machine.vm.provider "virtualbox" do |v|
+        v.name = "dockermachine_vm2"
+      end
+      machine.vm.synced_folder "./onvagrant", "/home/vagrant/project", create: true, 
+                                              mount_options: ["dmode=700","fmode=600"]
+  
+      machine.vm.provision "shell", inline: <<-SHELL
+        sudo apt-get update
+        sudo apt-get upgrade -y
+        # install latest python3
+        sudo apt-get install -y make build-essential zlib1g-dev libncurses5-dev libgdbm-dev libnss3-dev libssl-dev libreadline-dev libffi-dev libsqlite3-dev wget libbz2-dev curl
+        wget https://www.python.org/ftp/python/3.10.5/Python-3.10.5.tgz
+        tar -xf Python-3.10.5.tgz
+        cd Python-3.10.5/
+        ./configure --enable-optimizations --with-ensurepip=install
+        make -j 2
+        sudo make altinstall
+  
+        sudo apt-get install -y ca-certificates curl gnupg lsb-release
+        sudo mkdir -p /etc/apt/keyrings
+        curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+        echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+        sudo apt-get update
+        sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin # docker-compose is not needed that was the old compose. The new is installed with docker-compose-plugin
+      SHELL
+    end
+  
+  end
+  
