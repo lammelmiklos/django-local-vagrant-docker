@@ -1,6 +1,48 @@
 - hosts: docker2
+  become: yes
+  
   tasks:
-  - name: Creating an empty file
-    file:
-      path: "/home/vagrant/project/test_node.txt"
-      state: touch
+  - name: Ensure old versions of Docker are not installed.
+    package:
+      name:
+        - docker
+        - docker-engine
+      state: absent
+
+  - name: Install docker prerequisites on ubuntu
+    ansible.builtin.apt:
+      name:
+        - apt-transport-https
+        - ca-certificates
+        - lsb-release
+        - gnupg
+        - curl
+      state: latest
+      update_cache: true
+
+  - name: Add Docker apt signing key
+    ansible.builtin.apt_key:
+      url: "https://download.docker.com/linux/ubuntu/gpg"
+      id: 9DC858229FC7DD38854AE2D88D81803C0EBFCD88
+      state: present
+    register: add_repository_key
+
+ 
+  - name: Add repository into sources list
+    ansible.builtin.apt_repository:
+      repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+      state: present
+      update_cache: true
+
+  - name: Install Docker
+    ansible.builtin.apt:
+      name:
+        - docker-ce
+        - docker-ce-cli
+        - docker-compose-plugin
+        - containerd.io
+      state: latest
+      update_cache: true
+  
+
+
